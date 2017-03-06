@@ -885,7 +885,7 @@ class FacetGrid(Grid):
             ax.set_yticklabels(labels, **kwargs)
         return self
 
-    def set_titles(self, template=None, row_template=None,  col_template=None,
+    def set_titles(self, template=None, row_template=None, col_template=None, col_func=None,
                    **kwargs):
         """Draw titles either above each facet or on the grid margins.
 
@@ -901,6 +901,9 @@ class FacetGrid(Grid):
         col_template:
             Template for the row variable when titles are drawn on the grid
             margins. Must have {col_var} and {col_name} formatting keys.
+        col_func:
+            Function that takes a column name and returns a string. More 
+            flexibl than col_template.
 
         Returns
         -------
@@ -962,11 +965,17 @@ class FacetGrid(Grid):
                 title = template.format(**args)
                 self.axes[i, 0].set_title(title, **kwargs)
         elif self.col_names is not None and len(self.col_names):
-            for i, col_name in enumerate(self.col_names):
-                args.update(dict(col_name=col_name))
-                title = template.format(**args)
-                # Index the flat array so col_wrap works
-                self.axes.flat[i].set_title(title, **kwargs)
+            # TODO implement col_func consistently elsewhere. assert mutually exclusive w/ template.
+            if col_func is not None:
+                for i, col_name in enumerate(self.col_names):
+                    title = col_func(col_name)
+                    self.axes.flat[i].set_title(title, **kwargs)
+            else:
+                for i, col_name in enumerate(self.col_names):
+                    args.update(dict(col_name=col_name))
+                    title = template.format(**args)
+                    # Index the flat array so col_wrap works
+                    self.axes.flat[i].set_title(title, **kwargs)
         return self
 
     @property
